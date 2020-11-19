@@ -1,0 +1,22 @@
+{
+  "editor.formatOnSave": true,
+  "json.format.enable": true,
+  "javascript.format.enable": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true,
+    "source.fixAll.eslint": true
+  },
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "editor.minimap.enabled": false,
+  "editor.wordBasedSuggestions": false,
+  "editor.autoClosingBrackets": "beforeWhitespace",
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  "javascript.validate.enable": false,
+  "editor.suggest.showKeywords": false,
+  "editor.suggest.showWords": false,
+  "files.autoSave": "onFocusChange",
+  "html.format.enable": false
+}

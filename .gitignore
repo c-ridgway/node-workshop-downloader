@@ -1,0 +1,10 @@
+node_modules/
+data/
+public/
+.npm/
+
+.config.json
+src/Scraper.js
+
+.vscode-test
+.yarn/

@@ -1,0 +1,32 @@
+{
+  "steam_api_key": "",
+  "steam_game_id": 4920,
+  "steam_api_sleep_ms": 0,
+  "steam_concurrency": 10,
+  "data_key_exclude": [
+    "result",
+    "creator_appid",
+    "consumer_appid",
+    "consumer_shortcutid",
+    "filename",
+    "url",
+    "visibility",
+    "workshop_file",
+    "workshop_accepted",
+    "show_subscribe_all",
+    "can_be_deleted",
+    "app_name",
+    "subscriptions",
+    "favorited",
+    "followers",
+    "lifetime_subscriptions",
+    "lifetime_favorited",
+    "lifetime_followers",
+    "lifetime_playtime",
+    "lifetime_playtime_sessions",
+    "num_children",
+    "num_reports",
+    "maybe_inappropriate_sex",
+    "maybe_inappropriate_violence"
+  ]
+}

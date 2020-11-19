@@ -1,0 +1,40 @@
+{
+  "name": "node-workshop-downloader",
+  "version": "1.0.0",
+  "description": "Downloads every public workshop item from the Steam workshop, intended for backups.",
+  "main": "index.js",
+  "scripts": {
+    "debug": "NODE_ENV=development node inspect index.js",
+    "development": "NODE_ENV=development node index.js",
+    "production": "NODE_ENV=production node index.js",
+    "lint:fix": "eslint --fix ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/c-ridgway/node-workshop-downloader.git"
+  },
+  "keywords": [
+    "steam",
+    "workshop",
+    "downloader"
+  ],
+  "author": "github: c-ridgway",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/c-ridgway/node-workshop-downloader/issues"
+  },
+  "homepage": "https://github.com/c-ridgway/node-workshop-downloader#readme",
+  "devDependencies": {
+    "eslint": "^7.13.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "prettier": "^2.1.2"
+  },
+  "dependencies": {
+    "asynchronous-emitter": "^0.1.0",
+    "axios": "^0.21.0",
+    "check-disk-space": "^2.1.0",
+    "lnk": "^1.1.0",
+    "p-limit": "^3.0.2"
+  }
+}
