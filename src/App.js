@@ -3,7 +3,6 @@ const fs = require("fs");
 const Base = require("./Base");
 const link = require("lnk");
 const Plimit = require("p-limit");
-const { ESTALE } = require("constants");
 
 let config = global.config;
 
