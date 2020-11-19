@@ -19,9 +19,11 @@ Downloads every public workshop item from the Steam workshop, intended for backu
 
 1. Install git and nodejs.
 2. Pase in cmd/terminal:
-   `git clone https://github.com/c-ridgway/node-workshop-downloader.git && cd node-workshop-downloader`
-3. Add your steam API key to `config.json`, change the game id if you're wanting to backup something other than Natural Selection 2.
-4. Open `run.bat` for Windows and `run.sh` for Linux.
+   `git clone https://github.com/c-ridgway/node-workshop-downloader.git &&cd node-workshop-downloader`
+3. Download all dependencies:
+   `npm install`
+4. Add your steam API key to `config.json`, change the game id if you're wanting to backup something other than Natural Selection 2.
+5. Open `run.bat` for Windows and `run.sh` for Linux.
 
 ### Disclamar
 
