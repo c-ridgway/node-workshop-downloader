@@ -26,5 +26,5 @@ Downloads every public workshop item from the Steam workshop, intended for backu
 ### Disclamar
 
 - Please ensure you have enough free space before you begin. In the future I will check the available free space before the downloading begins, based on the workshop estimations.
-- Do not increase the `steam_concurrency` to something crazy, otherwise you may exceed some sort of query rate limit or increase the chances of transport failure.
+- Do not increase `steam_concurrency` to something crazy, otherwise you may exceed some sort of query rate limit or increase the chances of transport failure.
 - For games with a lot of mods 5000+, ensure to set `steam_api_sleep_ms`, as this will provide a delay between steam api page queries.
