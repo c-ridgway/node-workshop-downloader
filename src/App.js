@@ -103,7 +103,7 @@ class App extends Base {
     let count = 0;
     let i = 1;
     for (const [id, item] of Object.entries(items)) {
-      const itemOld = itemsOld[id];
+      const itemOld = itemsOld ? itemsOld[id] : null;
       promises.push(
         limit(async () => {
           if (await this.fetchWorkshopItem(id, item, itemOld)) {
@@ -125,7 +125,7 @@ class App extends Base {
 
     // Check if it needs to be updated
     if (fs.existsSync(pathDataMod)) {
-      if (itemOld.time_updated == item.time_updated) return false;
+      if (itemOld?.time_updated === item.time_updated) return false;
       fs.rmdirSync(pathDataMod, { recursive: true });
     }
 
@@ -145,15 +145,17 @@ class App extends Base {
 
       // Generate public symbolic links
       const modFilename = this.createModFilename(id, item.time_updated);
-      const modFilenameOld = this.createModFilename(id, itemOld.time_updated);
 
       if (item.preview_url) await link(Path.join(pathDataMod, "data.jpg"), this.pathPublic, { rename: modFilename + ".jpg", type: "symbolic" });
       await link(Path.join(pathDataMod, "data.zip"), this.pathPublic, { rename: modFilename + ".zip", type: "symbolic" });
       await link(Path.join(pathDataMod, "data.json"), this.pathPublic, { rename: modFilename + ".json", type: "symbolic" });
 
-      fs.rmdirSync(Path.join(pathDataMod, modFilenameOld + ".jpg"));
-      fs.rmdirSync(Path.join(pathDataMod, modFilenameOld + ".zip"));
-      fs.rmdirSync(Path.join(pathDataMod, modFilenameOld + ".json"));
+      if (itemOld) {
+        const modFilenameOld = this.createModFilename(id, itemOld.time_updated);
+        fs.rmdirSync(Path.join(pathPublic, modFilenameOld + ".jpg"));
+        fs.rmdirSync(Path.join(pathPublic, modFilenameOld + ".zip"));
+        fs.rmdirSync(Path.join(pathPublic, modFilenameOld + ".json"));
+      }
       //
 
       return true;
