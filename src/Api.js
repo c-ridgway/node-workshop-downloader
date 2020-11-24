@@ -20,7 +20,7 @@ class Api extends Base {
   }
 
   async _start() {
-    //await this.test();
+    await this.test();
   }
 
   async _free() {}
