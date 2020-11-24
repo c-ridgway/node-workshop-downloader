@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+    {
+      "type": "npm",
+      "script": "development",
+      "problemMatcher": [],
+      "label": "npm: development",
+      "detail": "NODE_ENV=development node index.js"
+    }
+  ]
+}

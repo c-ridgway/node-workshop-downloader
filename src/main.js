@@ -17,8 +17,13 @@ async function main() {
     global.gs.events.on("start", async () => {
       await global.api.start();
       await global.app.start();
+    });
 
+    // Main
+    global.gs.events.on("main", async () => {
       console.log();
+
+      global.app.process();
     });
 
     // Cleanup
@@ -27,7 +32,6 @@ async function main() {
       await global.app.free();
     });
 
-    //
     await global.gs.start();
   } catch (e) {
     console.error(e);

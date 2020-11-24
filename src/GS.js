@@ -16,6 +16,7 @@ class GS {
 
     process.on("SIGTERM", (...args) => instance.exit(...args));
     process.on("SIGINT", (...args) => instance.exit(...args));
+    global.isExiting = () => instance.isExiting();
 
     return instance;
   }
@@ -24,7 +25,7 @@ class GS {
     this.events = new AsyncEventEmitter();
     this._functs = [];
     this.prepend(() => this.events.emit("free"));
-    this._started = false;
+    this._setStarted(false);
   }
 
   append(funct) {
@@ -37,14 +38,22 @@ class GS {
 
   async start() {
     await this.events.emit("start");
-    this._started = true;
+    this._setStarted(true);
+    await this.events.emit("started");
+    await this.events.emit("main");
   }
 
   async free() {
-    if (!this._started) return true; // If app hasn't fully initialised
-    if (this._exiting) return false; // If already closed
+    if (this.isExiting()) return false; // If already freeing
 
-    this._exiting = true;
+    if (!this.isStarted()) {
+      // If app hasn't fully initialised
+      await new Promise((resolve, reject) => {
+        this.events.once("started", () => resolve());
+      });
+    }
+
+    this._setExiting(true);
 
     for (const funct of this._functs) {
       try {
@@ -62,9 +71,17 @@ class GS {
     }
 
     this.clear();
-    this._exiting = false;
+    this._setExiting(false);
 
     return true;
+  }
+
+  isExiting() {
+    return this._exiting;
+  }
+
+  isStarted() {
+    return this._started;
   }
 
   async exit(code) {
@@ -72,13 +89,15 @@ class GS {
 
     process.exit(0);
   }
+
+  //
+  _setExiting(value) {
+    this._exiting = value;
+  }
+
+  _setStarted(value) {
+    this._started = value;
+  }
 }
-
-//const instance = new GS();
-//process.on("SIGTERM", (...args) => instance.exit(...args));
-//process.on("SIGINT", (...args) => instance.exit(...args));
-//process.on('SIGUSR2', (...args) => console.log(22));
-
-//module.exports = instance;
 
 module.exports = GS;

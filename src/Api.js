@@ -9,7 +9,7 @@ class Api extends Base {
   constructor() {
     super();
 
-    if (!config?.steam_api_key) throw new Error("Missing config.json value `steam_api_config`");
+    if (config?.steam_api_key === undefined) throw new Error("Missing config.json value `steam_api_config`");
 
     this.errors = {
       failedConnectApi: "Failed to connect to the steam workshop, check your connection",
@@ -19,19 +19,11 @@ class Api extends Base {
     this.steamWorkshopQueryFilesUrl = `https://api.steampowered.com/IPublishedFileService/QueryFiles/v1/?key=${config.steam_api_key}&return_tags=1&return_details=1&return_metadata=1&appid=${config.steam_game_id}`;
   }
 
-  async start() {
-    return new Promise(async (resolve, reject) => {
-      super.start();
-
-      //await this.test();
-
-      resolve();
-    });
+  async _start() {
+    //await this.test();
   }
 
-  async free() {
-    super.free();
-  }
+  async _free() {}
 
   async test() {
     // Ensure access to steam api

@@ -1,70 +1,78 @@
 const Path = require("path");
-const fs = require("fs");
+const fs = require("fs-extra");
 const Base = require("./Base");
 const link = require("lnk");
 const Plimit = require("p-limit");
+const checkDiskSpace = require("check-disk-space");
 
 let config = global.config;
+
+function bytesToMb(bytes) {
+  return (bytes / 1024 / 1024).toFixed(2);
+}
 
 class App extends Base {
   constructor() {
     super();
 
-    if (!config?.steam_concurrency) throw new Error("Missing config.json value `steam_concurrency`");
+    if (config?.www_generate === undefined) throw new Error("Missing config.json value `www_generate`");
+    if (config?.steam_concurrency === undefined) throw new Error("Missing config.json value `steam_concurrency`");
 
     this.pathData = Path.join(process.cwd(), "data");
-    this.pathPublic = Path.join(process.cwd(), "public");
+    this.pathWww = Path.join(process.cwd(), "www");
     this.pathWorkshop = Path.join(this.pathData, "workshop.json");
     this.pathWorkshopOld = Path.join(this.pathData, "workshop.json.old");
 
+    this.items = null;
+    this.itemsOld = null;
+
+    this.promises = [];
+
     config.exclude_keys = config.exclude_keys || [];
+  }
 
+  async _start() {
     // Clear data dir
-    if (!fs.existsSync(this.pathData)) {
-      fs.mkdirSync(this.pathData);
-      fs.mkdirSync(this.pathPublic);
+    if (!(await fs.exists(this.pathData))) {
+      await fs.mkdir(this.pathData);
+      await fs.mkdir(this.pathWww);
     }
+
+    // Save data
+    this.items = await this.fetchData();
+
+    if (await fs.exists(this.pathWorkshop)) {
+      this.itemsOld = await fs.readJson(this.pathWorkshop);
+
+      // Ensure no formatting
+      if (JSON.stringify(this.items) == JSON.stringify(this.itemsOld)) {
+        console.log("No `workshop.json` changes");
+      } else {
+        await fs.rename(this.pathWorkshop, this.pathWorkshopOld);
+        await fs.writeJson(this.pathWorkshop, this.items);
+      }
+    } else {
+      // Check disk space
+      const totalSpace = Object.values(this.items).reduce((accumulator, item) => parseInt(accumulator || 0) + parseInt(item.file_size) + parseInt(item.preview_file_size));
+      const totalFreeSpace = parseInt((await checkDiskSpace(this.pathWww)).free);
+
+      if (totalSpace > totalFreeSpace) {
+        throw new Error(`Not enough disk space, requires '${bytesToMb(totalSpace - totalFreeSpace)}MB' more`);
+      }
+    }
+
+    await fs.writeJson(this.pathWorkshop, this.items);
+    //
   }
 
-  async start() {
-    return new Promise(async (resolve, reject) => {
-      super.start();
-
-      await this.process();
-
-      resolve();
-    });
-  }
-
-  async free() {
-    super.free();
-  }
+  async _free() {}
 
   async process() {
     const api = global.api;
 
-    let items, itemsOld;
-
-    // Save data
-    items = await this.fetchData();
-
-    if (fs.existsSync(this.pathWorkshop)) {
-      itemsOld = JSON.parse(fs.readFileSync(this.pathWorkshop));
-
-      // Ensure no formatting
-      if (JSON.stringify(items) == JSON.stringify(itemsOld)) {
-        console.log("No `workshop.json` changes");
-      } else {
-        fs.renameSync(this.pathWorkshop, this.pathWorkshopOld);
-      }
-    }
-
-    fs.writeFileSync(this.pathWorkshop, JSON.stringify(items, null, 2));
-    //
-
-    let count = await this.fetchWorkshopItems(items, itemsOld, (i, id, item) => {
-      const fileSizeMb = ((parseInt(item.file_size) + parseInt(item.preview_file_size)) / 1024 / 1024).toFixed(2);
-      const itemCount = Object.values(items).length;
+    let count = await this.fetchWorkshopItems(this.items, this.itemsOld, (i, id, item) => {
+      const fileSizeMb = bytesToMb(parseInt(item.file_size) + parseInt(item.preview_file_size));
+      const itemCount = Object.values(this.items).length;
 
       console.log(`${i}/${itemCount}: Downloaded ${id}: ${fileSizeMb} MB`);
     });
@@ -99,68 +107,80 @@ class App extends Base {
     const limit = Plimit(config.steam_concurrency); // Limit concurrency
     let promises = [];
 
-    let count = 0;
-    let i = 1;
+    let i = 0;
     for (const [id, item] of Object.entries(items)) {
       const itemOld = itemsOld ? itemsOld[id] : null;
       promises.push(
         limit(async () => {
+          if (global.isExiting()) return;
+
           if (await this.fetchWorkshopItem(id, item, itemOld)) {
-            count++;
-            if (functProgress) functProgress(i++, id, item, itemOld);
+            if (functProgress) functProgress(i + 1, id, item, itemOld);
           }
+
+          i++;
         })
       );
     }
 
     await Promise.all(promises);
 
-    return count;
+    return i;
   }
 
   async fetchWorkshopItem(id, item, itemOld) {
     const api = global.api;
     const pathDataMod = Path.join(this.pathData, id);
 
-    // Check if it needs to be updated
-    if (fs.existsSync(pathDataMod)) {
-      if (itemOld?.time_updated === item.time_updated) return false;
-      fs.rmdirSync(pathDataMod, { recursive: true });
-    }
-
-    fs.mkdirSync(pathDataMod);
-    //
-
     try {
-      // Download image
-      if (item.preview_url) await api.download(item.preview_url, Path.join(pathDataMod, "data.jpg"));
-      else console.log("Missing jpg " + id);
+      this.lock();
+
+      // Check if it needs to be updated
+      if (await fs.exists(pathDataMod)) {
+        if (itemOld?.time_updated === item.time_updated) return false;
+
+        await fs.rmdir(pathDataMod, { recursive: true });
+      }
+
+      await fs.mkdir(pathDataMod);
+      //
+
+      const modFilename = this.createModFilename(id, item.time_updated);
+      let promises = [];
 
       // Download image
-      await api.download(item.file_url, Path.join(pathDataMod, "data.zip"));
+      if (item.preview_url) {
+        promises.push(api.download(item.preview_url, Path.join(pathDataMod, "data.jpg")));
+      } else console.log("Missing jpg " + id);
+
+      // Download mod
+      if (config.www_generate) {
+        // Download to www directory and systemlink to the mod directory
+        promises.push(api.download(item.file_url, Path.join(this.pathWww, modFilename + ".zip")).then(() => link(Path.join(this.pathWww, modFilename + ".zip"), pathDataMod, { rename: "data.zip", type: "symbolic" })));
+      } else {
+        // Download to the mod directory
+        promises.push(api.download(item.file_url, Path.join(pathDataMod, "data.zip")));
+      }
 
       // Output json
-      fs.writeFileSync(Path.join(pathDataMod, "data.json"), JSON.stringify(item, null, 2));
-
-      // Generate public symbolic links
-      const modFilename = this.createModFilename(id, item.time_updated);
-
-      if (item.preview_url) await link(Path.join(pathDataMod, "data.jpg"), this.pathPublic, { rename: modFilename + ".jpg", type: "symbolic" });
-      await link(Path.join(pathDataMod, "data.zip"), this.pathPublic, { rename: modFilename + ".zip", type: "symbolic" });
-      await link(Path.join(pathDataMod, "data.json"), this.pathPublic, { rename: modFilename + ".json", type: "symbolic" });
+      promises.push(fs.writeFile(Path.join(pathDataMod, "data.json"), JSON.stringify(item, null, 2)));
 
       if (itemOld) {
-        const modFilenameOld = this.createModFilename(id, itemOld.time_updated);
-        fs.rmdirSync(Path.join(pathPublic, modFilenameOld + ".jpg"));
-        fs.rmdirSync(Path.join(pathPublic, modFilenameOld + ".zip"));
-        fs.rmdirSync(Path.join(pathPublic, modFilenameOld + ".json"));
+        //const modFilenameOld = this.createModFilename(id, itemOld.time_updated);
+        //fs.rmdirSync(Path.join(pathWww, modFilenameOld + ".jpg"));
+        //fs.rmdirSync(Path.join(pathWww, modFilenameOld + ".zip"));
+        //fs.rmdirSync(Path.join(pathWww, modFilenameOld + ".json"));
       }
       //
+
+      await Promise.all(promises);
 
       return true;
     } catch (error) {
       if (error.message.startsWith("404")) console.log("Error: " + error.message);
-      fs.rmdirSync(pathDataMod, { recursive: true });
+      await fs.rmdir(pathDataMod, { recursive: true });
+    } finally {
+      this.unlock();
     }
 
     return false;
