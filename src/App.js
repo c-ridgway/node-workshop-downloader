@@ -1,6 +1,6 @@
 const Path = require("path");
 const fs = require("fs-extra");
-const Base = require("./Base");
+const Base = require("./ext/Base");
 const link = require("lnk");
 const Plimit = require("p-limit");
 const checkDiskSpace = require("check-disk-space");

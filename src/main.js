@@ -6,7 +6,7 @@ global.sleep = function (millis) {
 };
 
 async function main() {
-  global.gs = require("./GS").create();
+  global.gs = require("./ext/GS").create();
 
   try {
     global.config = fs.existsSync(".config.json") ? require("../.config.json") : require("../config.json");
