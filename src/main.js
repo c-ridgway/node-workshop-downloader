@@ -1,10 +1,5 @@
 const fs = require("fs");
 
-global.sleep = function (millis) {
-  // use only in worker thread, currently Chrome-only
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, millis);
-};
-
 async function main() {
   global.gs = require("./ext/GS").create();
 

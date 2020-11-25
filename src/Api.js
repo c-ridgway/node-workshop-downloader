@@ -5,6 +5,10 @@ const fs = require("fs");
 
 const config = global.config;
 
+function sleep(millis) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, millis);
+}
+
 class Api extends Base {
   constructor() {
     super();
@@ -55,7 +59,7 @@ class Api extends Base {
 
     let pageMax = Math.floor((await this.fetchWorkshopPageCount()) / 100);
     for (let page = 1; page <= pageMax; page++) {
-      if (config.sleep_page_time_ms) global.sleep(config.sleep_page_time_ms);
+      if (config.steam_api_sleep_ms) sleep(config.steam_api_sleep_ms);
 
       promises.push(
         new Promise(async (resolve, reject) => {
