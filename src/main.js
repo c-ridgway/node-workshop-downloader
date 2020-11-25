@@ -1,10 +1,10 @@
-const fs = require("fs");
+const fs = require("fs-extra");
 
 async function main() {
   global.gs = require("./ext/GS").create();
 
   try {
-    global.config = fs.existsSync(".config.json") ? require("../.config.json") : require("../config.json");
+    global.config = (await fs.exists(".config.json")) ? require("../.config.json") : require("../config.json");
     global.api = require("./Api").create();
     global.app = require("./App").create();
 

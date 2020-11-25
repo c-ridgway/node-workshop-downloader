@@ -3,7 +3,6 @@ node_modules/
 .npm/
 .vscode-test
 .yarn/
-src/Scraper.js
 
 **data
 **public
