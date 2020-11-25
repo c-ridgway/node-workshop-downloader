@@ -2,6 +2,8 @@
 
 Downloads every public workshop item from the Steam workshop, intended for backups.
 
+Game ids: https://developer.valvesoftware.com/wiki/Steam_Application_IDs
+
 ## Config
 
 ### Get steam API key
