@@ -29,8 +29,8 @@ class Api extends Base {
 
   async _free() {}
 
+  // Test connectivity to steam api
   async test() {
-    // Ensure access to steam api
     await Axios.get(`${this.steamWorkshopQueryFilesUrl}`)
       .then(({ data }) => {
         const result = data?.response?.total;
@@ -42,16 +42,19 @@ class Api extends Base {
       });
   }
 
+  // Gets the number of 'pages' required to obtain all of the workshop items
   async fetchWorkshopPageCount() {
     const { data } = await Axios.get(`${this.steamWorkshopQueryFilesUrl}`);
     return parseInt(data.response.total);
   }
 
+  // Gets all the items of an associated 'page'
   async fetchWorkshopPageItems(index) {
     const { data } = await Axios.get(`${this.steamWorkshopQueryFilesUrl}&numperpage=100&page=${index}`);
     return data.response.publishedfiledetails;
   }
 
+  // Fetches all workshop items for a steam game
   async fetchAllWorkshopPageItems() {
     const pageCount = await this.fetchWorkshopPageCount();
     let output = [];
@@ -74,6 +77,7 @@ class Api extends Base {
     return output;
   }
 
+  // Download to a file
   async download(url, dest) {
     const writer = fs.createWriteStream(dest);
 

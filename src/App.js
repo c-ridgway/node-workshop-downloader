@@ -29,8 +29,9 @@ class App extends Base {
     config.exclude_keys = config.exclude_keys || [];
   }
 
+  // Create data directory, download workshop data json and check for free space
   async _init() {
-    // Clear data dir
+    // Create data dir
     if (!(await fs.exists(this.pathData))) {
       await fs.mkdir(this.pathData);
       await fs.mkdir(this.pathWww);
@@ -60,24 +61,11 @@ class App extends Base {
     }
 
     await fs.writeJson(this.pathWorkshop, this.items);
-    //
   }
 
   async _free() {}
 
-  async main() {
-    const api = global.api;
-
-    let count = await this.fetchWorkshopItems(this.items, this.itemsOld, (i, id, item) => {
-      const fileSizeMb = bytesToMb(parseInt(item.file_size) + parseInt(item.preview_file_size));
-      const itemCount = Object.values(this.items).length;
-
-      console.log(`${i}/${itemCount}: Downloaded ${id}: ${fileSizeMb} MB`);
-    });
-
-    console.log(`Mods downloaded/updated: ${count}`);
-  }
-
+  // Fetch workshop data json
   async fetchData() {
     const api = global.api;
 
@@ -101,6 +89,21 @@ class App extends Base {
     return lookupItems;
   }
 
+  // Download all workshop items and display progress
+  async main() {
+    const api = global.api;
+
+    let count = await this.fetchWorkshopItems(this.items, this.itemsOld, (i, id, item) => {
+      const fileSizeMb = bytesToMb(parseInt(item.file_size) + parseInt(item.preview_file_size));
+      const itemCount = Object.values(this.items).length;
+
+      console.log(`${i}/${itemCount}: Downloaded ${id}: ${fileSizeMb} MB`);
+    });
+
+    console.log(`Mods downloaded/updated: ${count}`);
+  }
+
+  // Download all workshop items
   async fetchWorkshopItems(items, itemsOld, functProgress) {
     const limit = Plimit(config.steam_concurrency); // Limit concurrency
     let promises = [];
@@ -126,6 +129,7 @@ class App extends Base {
     return i;
   }
 
+  // Download a workshop item
   async fetchWorkshopItem(id, item, itemOld) {
     const api = global.api;
     const pathDataMod = Path.join(this.pathData, id);
@@ -163,14 +167,6 @@ class App extends Base {
       // Output json
       promises.push(fs.writeFile(Path.join(pathDataMod, "data.json"), JSON.stringify(item, null, 2)));
 
-      if (itemOld) {
-        //const modFilenameOld = this.createModFilename(id, itemOld.time_updated);
-        //fs.rmdirSync(Path.join(pathWww, modFilenameOld + ".jpg"));
-        //fs.rmdirSync(Path.join(pathWww, modFilenameOld + ".zip"));
-        //fs.rmdirSync(Path.join(pathWww, modFilenameOld + ".json"));
-      }
-      //
-
       await Promise.all(promises);
 
       return true;
@@ -184,7 +180,18 @@ class App extends Base {
     return false;
   }
 
+  // Generate the mod filename
   createModFilename(id, updated) {
+    switch (config.steam_game_id) {
+      case 4920:
+        return this.createModFilenameNs2(id, updated);
+      default:
+        return `${id}`;
+    }
+  }
+
+  // Generate the ns2 mod filename `mID_TIMESTAMP`
+  createModFilenameNs2(id, updated) {
     let idHex = parseInt(id).toString(16);
     return `m${idHex}_${updated}`;
   }
