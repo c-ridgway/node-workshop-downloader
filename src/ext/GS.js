@@ -3,11 +3,12 @@ const AsyncEventEmitter = require("asynchronous-emitter");
 //
 class GS {
   constructor() {
-    this._functs = null;
-    this._exiting = false;
-    this.events = null;
-    this._started = false;
+    this.__isExiting = false;
+    this.__isFreeing = false;
+    this.__hasInit = false;
 
+    this.events = null;
+    this.__functs = null;
     this.clear();
   }
 
@@ -23,39 +24,39 @@ class GS {
 
   clear() {
     this.events = new AsyncEventEmitter();
-    this._functs = [];
+    this.__functs = [];
+
     this.prepend(() => this.events.emit("free"));
-    this._setStarted(false);
+    this._setHasInit(false);
   }
 
   append(funct) {
-    this._functs.push(funct);
+    this.__functs.push(funct);
   }
 
   prepend(funct) {
-    this._functs.unshift(funct);
+    this.__functs.unshift(funct);
   }
 
-  async start() {
-    await this.events.emit("start");
-    this._setStarted(true);
-    await this.events.emit("started");
+  async main() {
+    await this.events.emit("pre_init");
+    await this.events.emit("init");
+    this._setHasInit(true);
+    await this.events.emit("post_init");
     await this.events.emit("main");
   }
 
   async free() {
-    if (this.isExiting()) return false; // If already freeing
-
-    if (!this.isStarted()) {
-      // If app hasn't fully initialised
+    if (!this.hasInit()) {
+      // If app hasn't fully initialised, wait
       await new Promise((resolve, reject) => {
-        this.events.once("started", () => resolve());
+        this.events.once("post_init", () => resolve());
       });
     }
 
-    this._setExiting(true);
+    this._setIsFreeing(true);
 
-    for (const funct of this._functs) {
+    for (const funct of this.__functs) {
       try {
         let result = funct();
         if (Promise.resolve(result) == result)
@@ -71,32 +72,41 @@ class GS {
     }
 
     this.clear();
-    this._setExiting(false);
-
-    return true;
+    this._setIsFreeing(false);
   }
 
   isExiting() {
-    return this._exiting;
+    return this.__isExiting;
   }
 
-  isStarted() {
-    return this._started;
+  isFreeing() {
+    return this.__isFreeing;
+  }
+
+  hasInit() {
+    return this.__hasInit;
   }
 
   async exit(code) {
-    if (!(await this.free())) return;
+    if (this.isExiting()) return; // If already freeing
 
-    process.exit(0);
+    this._setIsExiting(true);
+    await this.free();
+
+    process.exit();
   }
 
   //
-  _setExiting(value) {
-    this._exiting = value;
+  _setIsExiting(value) {
+    this.__isExiting = value;
   }
 
-  _setStarted(value) {
-    this._started = value;
+  _setIsFreeing(value) {
+    this.__isFreeing = value;
+  }
+
+  _setHasInit(value) {
+    this.__hasInit = value;
   }
 }
 

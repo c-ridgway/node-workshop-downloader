@@ -26,12 +26,10 @@ class App extends Base {
     this.items = null;
     this.itemsOld = null;
 
-    this.promises = [];
-
     config.exclude_keys = config.exclude_keys || [];
   }
 
-  async _start() {
+  async _init() {
     // Clear data dir
     if (!(await fs.exists(this.pathData))) {
       await fs.mkdir(this.pathData);
@@ -67,7 +65,7 @@ class App extends Base {
 
   async _free() {}
 
-  async process() {
+  async main() {
     const api = global.api;
 
     let count = await this.fetchWorkshopItems(this.items, this.itemsOld, (i, id, item) => {

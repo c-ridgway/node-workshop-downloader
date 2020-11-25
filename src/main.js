@@ -9,16 +9,14 @@ async function main() {
     global.app = require("./App").create();
 
     // Start
-    global.gs.events.on("start", async () => {
-      await global.api.start();
-      await global.app.start();
+    global.gs.events.on("init", async () => {
+      await global.api.init();
+      await global.app.init();
     });
 
     // Main
     global.gs.events.on("main", async () => {
-      console.log();
-
-      global.app.process();
+      global.app.main();
     });
 
     // Cleanup
@@ -27,7 +25,7 @@ async function main() {
       await global.app.free();
     });
 
-    await global.gs.start();
+    await global.gs.main();
   } catch (e) {
     console.error(e);
   }

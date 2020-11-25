@@ -11,15 +11,15 @@ class Base {
     return instance;
   }
 
-  start() {
-    const started = Date.now();
-    return this._start().then(() => {
-      console.log(`Info: Loaded ${this.constructor.name} ${Date.now() - started}ms`);
+  init() {
+    const time = Date.now();
+    return this._init().then(() => {
+      console.log(`Info: Loaded ${this.constructor.name} ${Date.now() - time}ms`);
     });
   }
 
   async free() {
-    const started = Date.now();
+    const time = Date.now();
 
     // Wait until unlocked
     await new Promise((resolve, reject) => {
@@ -30,7 +30,7 @@ class Base {
 
     // Free data
     await this._free().then(() => {
-      console.log(`Info: Freed ${this.constructor.name} ${Date.now() - started}ms`);
+      console.log(`Info: Freed ${this.constructor.name} ${Date.now() - time}ms`);
     });
   }
 
@@ -49,8 +49,8 @@ class Base {
     return this._locked;
   }
 
-  _start() {
-    throw new Error(`Undefined '_start' in ${this.constructor.name}`);
+  _init() {
+    throw new Error(`Undefined '_init' in ${this.constructor.name}`);
   }
 
   _free() {

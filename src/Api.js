@@ -23,7 +23,7 @@ class Api extends Base {
     this.steamWorkshopQueryFilesUrl = `https://api.steampowered.com/IPublishedFileService/QueryFiles/v1/?key=${config.steam_api_key}&return_tags=1&return_details=1&return_metadata=1&appid=${config.steam_game_id}`;
   }
 
-  async _start() {
+  async _init() {
     await this.test();
   }
 
