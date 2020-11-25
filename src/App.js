@@ -97,7 +97,7 @@ class App extends Base {
       const fileSizeMb = bytesToMb(parseInt(item.file_size) + parseInt(item.preview_file_size));
       const itemCount = Object.values(this.items).length;
 
-      console.log(`${i}/${itemCount}: Downloaded ${id}: ${fileSizeMb} MB`);
+      console.log(`  ${i}/${itemCount}: Downloaded ${id}: ${fileSizeMb} MB`);
     });
 
     console.log(`Mods downloaded/updated: ${count}`);
