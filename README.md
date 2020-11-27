@@ -20,8 +20,8 @@ Game ids: https://developer.valvesoftware.com/wiki/Steam_Application_IDs
 ### Install
 
 1. Install git and nodejs.
-2. Pase in cmd/terminal:
-   `git clone https://github.com/c-ridgway/node-workshop-downloader.git &&cd node-workshop-downloader`
+2. Paste in cmd/terminal:
+   `git clone https://github.com/c-ridgway/node-workshop-downloader.git && cd node-workshop-downloader`
 3. Download all dependencies:
    `npm install`
 4. Add your steam API key to `config.json`, change the game id if you're wanting to backup something other than Natural Selection 2.
