@@ -1,7 +1,7 @@
 const fs = require("fs-extra");
 
 async function main() {
-  global.gs = require("./ext/GS").create();
+  global.gsm = require("graceful-shutdown-manager").Manager.create();
 
   try {
     global.config = (await fs.exists(".config.json")) ? require("../.config.json") : require("../config.json");
@@ -9,25 +9,26 @@ async function main() {
     global.app = require("./App").create();
 
     // Start
-    global.gs.events.on("init", async () => {
+    global.gsm.events.on("init", async () => {
       await global.api.init();
       await global.app.init();
     });
 
     // Main
-    global.gs.events.on("main", async () => {
+    global.gsm.events.on("main", async () => {
       global.app.main();
     });
 
     // Cleanup
-    global.gs.events.on("free", async () => {
+    global.gsm.events.on("free", async () => {
       await global.api.free();
       await global.app.free();
     });
 
-    await global.gs.main();
+    await global.gsm.main();
   } catch (e) {
     console.error(e);
+    global.gsm.exit();
   }
 }
 

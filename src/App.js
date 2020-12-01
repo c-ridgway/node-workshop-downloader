@@ -1,6 +1,6 @@
 const Path = require("path");
 const fs = require("fs-extra");
-const Base = require("./ext/Base");
+const Base = require("graceful-shutdown-manager").Base;
 const link = require("lnk");
 const Plimit = require("p-limit");
 const checkDiskSpace = require("check-disk-space");
@@ -27,43 +27,43 @@ class App extends Base {
     this.itemsOld = null;
 
     config.exclude_keys = config.exclude_keys || [];
-  }
 
-  // Create data directory, download workshop data json and check for free space
-  async _init() {
-    // Create data dir
-    if (!(await fs.exists(this.pathData))) {
-      await fs.mkdir(this.pathData);
-      await fs.mkdir(this.pathWww);
-    }
+    // Create data directory, download workshop data json and check for free space
+    this.events.on("init", async () => {
+      // Create data dir
+      if (!(await fs.exists(this.pathData))) {
+        await fs.mkdir(this.pathData);
+        await fs.mkdir(this.pathWww);
+      }
 
-    // Save data
-    this.items = await this.fetchData();
+      // Save data
+      this.items = await this.fetchData();
 
-    if (await fs.exists(this.pathWorkshop)) {
-      this.itemsOld = await fs.readJson(this.pathWorkshop);
+      if (await fs.exists(this.pathWorkshop)) {
+        this.itemsOld = await fs.readJson(this.pathWorkshop);
 
-      // Ensure no formatting
-      if (JSON.stringify(this.items) == JSON.stringify(this.itemsOld)) {
-        console.log("No `workshop.json` changes");
+        // Ensure no formatting
+        if (JSON.stringify(this.items) == JSON.stringify(this.itemsOld)) {
+          console.log("No `workshop.json` changes");
+        } else {
+          await fs.rename(this.pathWorkshop, this.pathWorkshopOld);
+          await fs.writeJson(this.pathWorkshop, this.items);
+        }
       } else {
-        await fs.rename(this.pathWorkshop, this.pathWorkshopOld);
-        await fs.writeJson(this.pathWorkshop, this.items);
-      }
-    } else {
-      // Check disk space
-      const totalSpace = Object.values(this.items).reduce((accumulator, item) => parseInt(accumulator || 0) + parseInt(item.file_size) + parseInt(item.preview_file_size));
-      const totalFreeSpace = parseInt((await checkDiskSpace(this.pathWww)).free);
+        // Check disk space
+        const totalSpace = Object.values(this.items).reduce((accumulator, item) => parseInt(accumulator || 0) + parseInt(item.file_size) + parseInt(item.preview_file_size));
+        const totalFreeSpace = parseInt((await checkDiskSpace(this.pathWww)).free);
 
-      if (totalSpace > totalFreeSpace) {
-        throw new Error(`Not enough disk space, requires '${bytesToMb(totalSpace - totalFreeSpace)}MB' more`);
+        if (totalSpace > totalFreeSpace) {
+          throw new Error(`Not enough disk space, requires '${bytesToMb(totalSpace - totalFreeSpace)}MB' more`);
+        }
       }
-    }
 
-    await fs.writeJson(this.pathWorkshop, this.items);
+      await fs.writeJson(this.pathWorkshop, this.items);
+    });
+
+    this.events.on("free", async () => {});
   }
-
-  async _free() {}
 
   // Fetch workshop data json
   async fetchData() {
@@ -113,7 +113,7 @@ class App extends Base {
       const itemOld = itemsOld ? itemsOld[id] : null;
       promises.push(
         limit(async () => {
-          if (global.isExiting()) return;
+          if (global.gsm.isExiting()) return;
 
           if (await this.fetchWorkshopItem(id, item, itemOld)) {
             if (functProgress) functProgress(i + 1, id, item, itemOld);

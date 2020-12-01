@@ -1,5 +1,5 @@
 const Path = require("path");
-const Base = require("./ext/Base");
+const Base = require("graceful-shutdown-manager").Base;
 const Axios = require("axios");
 const Plimit = require("p-limit");
 const fs = require("fs");
@@ -18,13 +18,13 @@ class Api extends Base {
     };
 
     this.steamWorkshopQueryFilesUrl = `https://api.steampowered.com/IPublishedFileService/QueryFiles/v1/?key=${config.steam_api_key}&return_tags=1&return_details=1&return_metadata=1&appid=${config.steam_game_id}`;
-  }
 
-  async _init() {
-    await this.test();
-  }
+    this.events.on("init", async () => {
+      await this.test();
+    });
 
-  async _free() {}
+    this.events.on("free", async () => {});
+  }
 
   // Test connectivity to steam api
   async test() {
@@ -62,7 +62,7 @@ class Api extends Base {
     for (let page = 1; page <= pageMax; page++) {
       promises.push(
         limit(async () => {
-          if (global.isExiting()) return;
+          if (global.gsm.isExiting()) return;
 
           console.log(`  Page: ${page}`);
           output.push(...(await this.fetchWorkshopPageItems(page)));
