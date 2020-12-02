@@ -10,7 +10,7 @@ class Api extends Base {
   constructor() {
     super();
 
-    if (config?.steam_api_key === undefined) throw new Error("Missing config.json value `steam_api_config`");
+    if (config?.steam_api_key === undefined) throw new Error("Missing config.json value `steam_api_key`");
 
     this.errors = {
       failedConnectApi: "Failed to connect to the steam workshop, check your connection",
